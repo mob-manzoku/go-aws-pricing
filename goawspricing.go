@@ -9,31 +9,18 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type instanceTypes map[string]*size
+type InstanceTypes map[string]*Size
 
-type size struct {
-	size           *string
-	vCPU           *int
-	ECU            *string
-	memoryGiB      *float64
-	storageGB      *string
-	system         *string
-	piopsOptimized *bool
-	price          *float64
-	network        *string
-}
-type instanceTypesEntity map[string]sizeEntity
-
-type sizeEntity struct {
-	size           string
-	vCPU           int
-	ECU            string
-	memoryGiB      float64
-	storageGB      string
-	system         string
-	piopsOptimized bool
-	price          float64
-	network        string
+type Size struct {
+	Size           *string  `json:"size"`
+	VCPU           *int     `json:"vCPU"`
+	ECU            *string  `json:"ECU"`
+	MemoryGiB      *float64 `json:"memoryGiB"`
+	StorageGB      *string  `json:"storageGB"`
+	System         *string  `json:"system"`
+	PiopsOptimized *bool    `json:"piopsOptimized"`
+	Price          *float64 `json:"price"`
+	Network        *string  `json:"network"`
 }
 
 var awsPricingURLs = map[string]string{
@@ -42,24 +29,10 @@ var awsPricingURLs = map[string]string{
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
 }
 
-func GetEntity(in instanceTypes) instanceTypesEntity {
-	ret := instanceTypesEntity{}
-
-	for k, v := range in {
-		obj := sizeEntity{
-			size:  *v.size,
-			price: *v.price,
-		}
-		ret[k] = obj
-	}
-
-	return ret
-}
-
-func GetEC2Pricing(region string) instanceTypes {
+func GetEC2Pricing(region string) InstanceTypes {
 
 	service := "ec2"
-	ret := instanceTypes{}
+	ret := InstanceTypes{}
 
 	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs[service])
 
@@ -92,17 +65,17 @@ func GetEC2Pricing(region string) instanceTypes {
 				msys := s.Get("valueColumns").GetIndex(0).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(s.Get("valueColumns").GetIndex(0).Get("prices").Get("USD").MustString(), 64)
 
-				obj := &size{
-					size:      &msize,
-					vCPU:      &mvCPU,
+				obj := &Size{
+					Size:      &msize,
+					VCPU:      &mvCPU,
 					ECU:       &mECU,
-					memoryGiB: &mmem,
-					storageGB: &msto,
-					system:    &msys,
-					price:     &mprice,
+					MemoryGiB: &mmem,
+					StorageGB: &msto,
+					System:    &msys,
+					Price:     &mprice,
 				}
 
-				ret[*obj.size] = obj
+				ret[*obj.Size] = obj
 
 			}
 		}
@@ -112,11 +85,11 @@ func GetEC2Pricing(region string) instanceTypes {
 
 }
 
-func GetElasticachePricing(region string) instanceTypes {
+func GetElasticachePricing(region string) InstanceTypes {
 
 	service := "elasticache"
 	specpath := "spec/elasticache.yml"
-	ret := instanceTypes{}
+	ret := InstanceTypes{}
 
 	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs[service])
 
@@ -143,12 +116,14 @@ func GetElasticachePricing(region string) instanceTypes {
 
 				msize := tiers.GetIndex(k).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(tiers.GetIndex(k).Get("prices").Get("USD").MustString(), 64)
-				obj := &size{
-					size:  &msize,
-					price: &mprice,
+				msys := "Redis"
+				obj := &Size{
+					Size:   &msize,
+					Price:  &mprice,
+					System: &msys,
 				}
 
-				ret[*obj.size] = obj
+				ret[*obj.Size] = obj
 			}
 
 		}
@@ -170,9 +145,9 @@ func GetElasticachePricing(region string) instanceTypes {
 		mnet := v.(map[interface{}]interface{})["network"].(string)
 
 		if _, ok := ret[msize]; ok {
-			ret[msize].vCPU = &mvCPU
-			ret[msize].memoryGiB = &mmem
-			ret[msize].network = &mnet
+			ret[msize].VCPU = &mvCPU
+			ret[msize].MemoryGiB = &mmem
+			ret[msize].Network = &mnet
 		}
 
 	}
@@ -180,11 +155,11 @@ func GetElasticachePricing(region string) instanceTypes {
 	return ret
 }
 
-func GetRDSPricing(region string) instanceTypes {
+func GetRDSPricing(region string) InstanceTypes {
 
 	service := "rds"
 	specpath := "spec/rds.yml"
-	ret := instanceTypes{}
+	ret := InstanceTypes{}
 
 	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs[service])
 
@@ -211,12 +186,14 @@ func GetRDSPricing(region string) instanceTypes {
 
 				msize := tiers.GetIndex(k).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(tiers.GetIndex(k).Get("prices").Get("USD").MustString(), 64)
-				obj := &size{
-					size:  &msize,
-					price: &mprice,
+				msys := "MySQL"
+				obj := &Size{
+					Size:   &msize,
+					Price:  &mprice,
+					System: &msys,
 				}
 
-				ret[*obj.size] = obj
+				ret[*obj.Size] = obj
 			}
 
 		}
@@ -239,10 +216,10 @@ func GetRDSPricing(region string) instanceTypes {
 		mnet := v.(map[interface{}]interface{})["network"].(string)
 
 		if _, ok := ret[msize]; ok {
-			ret[msize].vCPU = &mvCPU
-			ret[msize].memoryGiB = &mmem
-			ret[msize].piopsOptimized = &mpiop
-			ret[msize].network = &mnet
+			ret[msize].VCPU = &mvCPU
+			ret[msize].MemoryGiB = &mmem
+			ret[msize].PiopsOptimized = &mpiop
+			ret[msize].Network = &mnet
 		}
 
 	}
