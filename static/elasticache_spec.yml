@@ -1,0 +1,26 @@
+elasticache:
+  - size: cache.t2.micro
+    vCPU: 1
+    memoryGiB: 0.555
+    network: Low to Moderate
+  - size: cache.t2.small
+    vCPU: 1
+    memoryGiB: 1.55
+    network: Low to Moderate
+  - size: cache.t2.medium
+    vCPU: 2
+    memoryGiB: 3.22
+    network: Low to Moderate
+  - size: cache.m3.medium
+    vCPU: 1
+    memoryGiB: 2.78
+    network: Moderate
+  - size: cache.m3.large
+    vCPU: 2
+    memoryGiB: 6.05
+    network: Moderate
+
+
+
+
+
