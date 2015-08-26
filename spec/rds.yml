@@ -1,17 +1,17 @@
 rds:
   - size: db.t2.micro
     vCPU: 1
-    memoryGiB: 1
+    memoryGiB: 1.0
     piopsOptimized: no
     network: Low to Moderate
   - size: db.t2.small
     vCPU: 1
-    memoryGiB: 2
+    memoryGiB: 2.0
     piopsOptimized: no
     network: Low to Moderate
   - size: db.t2.medium
     vCPU: 2
-    memoryGiB: 4
+    memoryGiB: 4.0
     piopsOptimized: no
     network: Low to Moderate
   - size: db.m3.medium
@@ -26,17 +26,17 @@ rds:
     network: Moderate
   - size: db.m3.xlarge
     vCPU: 4
-    memoryGiB: 15
+    memoryGiB: 15.0
     piopsOptimized: yes
     network: High
   - size: db.m3.2xlarge
     vCPU: 8
-    memoryGiB: 30
+    memoryGiB: 30.0
     piopsOptimized: yes
     network: High
   - size: db.r3.large
     vCPU: 2
-    memoryGiB: 15
+    memoryGiB: 15.0
     piopsOptimized: no
     network: Moderate
   - size: db.r3.xlarge
@@ -46,16 +46,16 @@ rds:
     network: Moderate
   - size: db.r3.2xlarge
     vCPU: 8
-    memoryGiB: 61
+    memoryGiB: 61.0
     piopsOptimized: yes
     network: High
   - size: db.r3.4xlarge
     vCPU: 16
-    memoryGiB: 122
+    memoryGiB: 122.0
     piopsOptimized: yes
     network: High
   - size: db.r3.8xlarge
     vCPU: 32
-    memoryGiB: 244
+    memoryGiB: 244.0
     piopsOptimized: no
     network: 10 Gigabit
