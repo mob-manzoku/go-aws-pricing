@@ -22,11 +22,38 @@ type size struct {
 	price          *float64
 	network        *string
 }
+type instanceTypesEntity map[string]sizeEntity
+
+type sizeEntity struct {
+	size           string
+	vCPU           int
+	ECU            string
+	memoryGiB      float64
+	storageGB      string
+	system         string
+	piopsOptimized bool
+	price          float64
+	network        string
+}
 
 var awsPricingURLs = map[string]string{
 	"ec2":         "http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js",
 	"rds":         "http://a0.awsstatic.com/pricing/1/rds/mysql/pricing-standard-deployments.min.js",
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
+}
+
+func GetEntity(in instanceTypes) instanceTypesEntity {
+	ret := instanceTypesEntity{}
+
+	for k, v := range in {
+		obj := sizeEntity{
+			size:  *v.size,
+			price: *v.price,
+		}
+		ret[k] = obj
+	}
+
+	return ret
 }
 
 func GetEC2Pricing(region string) instanceTypes {
