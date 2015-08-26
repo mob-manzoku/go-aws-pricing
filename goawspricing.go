@@ -1,11 +1,10 @@
-package main
+package goawspricing
 
 import (
 	"io/ioutil"
 	"strconv"
 
 	"github.com/bitly/go-simplejson"
-	"github.com/k0kubun/pp"
 	"github.com/mob-manzoku/go-jsonp"
 	"gopkg.in/yaml.v2"
 )
@@ -28,18 +27,6 @@ var awsPricingURLs = map[string]string{
 	"ec2":         "http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js",
 	"rds":         "http://a0.awsstatic.com/pricing/1/rds/mysql/pricing-standard-deployments.min.js",
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
-}
-
-func main() {
-	//region := "apac-tokyo"
-
-	ec2 := GetEC2Pricing("ap-northeast-1")
-	ec := GetElasticachePricing("ap-northeast-1")
-	rds := GetRDSPricing("apac-tokyo")
-	pp.Print(ec2)
-	pp.Print(ec)
-	pp.Print(rds)
-
 }
 
 func GetEC2Pricing(region string) instanceTypes {
