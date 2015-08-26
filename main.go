@@ -15,9 +15,9 @@ type instanceTypes map[string]*size
 type size struct {
 	size           *string
 	vCPU           *int
-	ECU            *float64
+	ECU            *string
 	memoryGiB      *float64
-	storageGB      *float64
+	storageGB      *string
 	system         *string
 	piopsOptimized *bool
 	price          *float64
@@ -33,8 +33,68 @@ var awsPricingURLs = map[string]string{
 func main() {
 	//region := "apac-tokyo"
 
+	ec2 := GetEC2Pricing("ap-northeast-1")
 	ec := GetElasticachePricing("ap-northeast-1")
+	rds := GetRDSPricing("apac-tokyo")
+	pp.Print(ec2)
 	pp.Print(ec)
+	pp.Print(rds)
+
+}
+
+func GetEC2Pricing(region string) instanceTypes {
+
+	service := "ec2"
+	ret := instanceTypes{}
+
+	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs[service])
+
+	raw, err := simplejson.NewJson([]byte(str))
+	if err != nil {
+		panic(err)
+	}
+
+	regions := raw.Get("config").Get("regions")
+
+	for i := range regions.MustArray() {
+
+		if regions.GetIndex(i).Get("region").MustString() != region {
+			continue
+		}
+
+		types := regions.GetIndex(i).Get("instanceTypes")
+
+		for j := range types.MustArray() {
+
+			sizes := types.GetIndex(j).Get("sizes")
+			for k := range sizes.MustArray() {
+				s := sizes.GetIndex(k)
+
+				msize := s.Get("size").MustString()
+				mvCPU, _ := strconv.Atoi(s.Get("vCPU").MustString())
+				mECU := s.Get("ECU").MustString()
+				mmem, _ := strconv.ParseFloat(s.Get("memoryGiB").MustString(), 64)
+				msto := s.Get("storageGB").MustString()
+				msys := s.Get("valueColumns").GetIndex(0).Get("name").MustString()
+				mprice, _ := strconv.ParseFloat(s.Get("valueColumns").GetIndex(0).Get("prices").Get("USD").MustString(), 64)
+
+				obj := &size{
+					size:      &msize,
+					vCPU:      &mvCPU,
+					ECU:       &mECU,
+					memoryGiB: &mmem,
+					storageGB: &msto,
+					system:    &msys,
+					price:     &mprice,
+				}
+
+				ret[*obj.size] = obj
+
+			}
+		}
+
+	}
+	return ret
 
 }
 
