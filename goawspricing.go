@@ -129,7 +129,7 @@ func GetElasticachePricing(region string) instanceTypes {
 
 	buf, err := ioutil.ReadFile(specpath)
 	if err != nil {
-		panic(err)
+		return ret
 	}
 
 	m := make(map[interface{}]interface{})
@@ -197,7 +197,7 @@ func GetRDSPricing(region string) instanceTypes {
 
 	buf, err := ioutil.ReadFile(specpath)
 	if err != nil {
-		panic(err)
+		return ret
 	}
 
 	m := make(map[interface{}]interface{})
