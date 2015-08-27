@@ -19,7 +19,9 @@ type Size struct {
 	StorageGB      *string  `json:"storageGB"`
 	System         *string  `json:"system"`
 	PiopsOptimized *bool    `json:"piopsOptimized"`
-	Price          *float64 `json:"price"`
+	PriceHour      *float64 `json:"price_hour"`
+	PriceDay       *float64 `json:"price_day"`
+	PriceMonth     *float64 `json:"price_month"`
 	Network        *string  `json:"network"`
 }
 
@@ -27,6 +29,17 @@ var awsPricingURLs = map[string]string{
 	"ec2":         "http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js",
 	"rds":         "http://a0.awsstatic.com/pricing/1/rds/mysql/pricing-standard-deployments.min.js",
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
+}
+
+func priceMultiplication(hourPrice float64) (float64, float64) {
+	hourDay := float64(24)
+	daysMonth := float64(30)
+	significant := float64(100)
+
+	dayPrice := float64(int(hourPrice*hourDay*significant)) / significant
+	monthPrice := float64(int(hourPrice*hourDay*daysMonth*significant)) / significant
+
+	return dayPrice, monthPrice
 }
 
 func GetEC2Pricing(region string) InstanceTypes {
@@ -64,15 +77,18 @@ func GetEC2Pricing(region string) InstanceTypes {
 				msto := s.Get("storageGB").MustString()
 				msys := s.Get("valueColumns").GetIndex(0).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(s.Get("valueColumns").GetIndex(0).Get("prices").Get("USD").MustString(), 64)
+				mpriced, mpricem := priceMultiplication(mprice)
 
 				obj := &Size{
-					Size:      &msize,
-					VCPU:      &mvCPU,
-					ECU:       &mECU,
-					MemoryGiB: &mmem,
-					StorageGB: &msto,
-					System:    &msys,
-					Price:     &mprice,
+					Size:       &msize,
+					VCPU:       &mvCPU,
+					ECU:        &mECU,
+					MemoryGiB:  &mmem,
+					StorageGB:  &msto,
+					System:     &msys,
+					PriceHour:  &mprice,
+					PriceDay:   &mpriced,
+					PriceMonth: &mpricem,
 				}
 
 				ret[*obj.Size] = obj
@@ -116,11 +132,15 @@ func GetElasticachePricing(region string) InstanceTypes {
 
 				msize := tiers.GetIndex(k).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(tiers.GetIndex(k).Get("prices").Get("USD").MustString(), 64)
-				msys := "Redis"
+				mpriced, mpricem := priceMultiplication(mprice)
+				msys := "redis"
+
 				obj := &Size{
-					Size:   &msize,
-					Price:  &mprice,
-					System: &msys,
+					Size:       &msize,
+					PriceHour:  &mprice,
+					PriceDay:   &mpriced,
+					PriceMonth: &mpricem,
+					System:     &msys,
 				}
 
 				ret[*obj.Size] = obj
@@ -186,11 +206,15 @@ func GetRDSPricing(region string) InstanceTypes {
 
 				msize := tiers.GetIndex(k).Get("name").MustString()
 				mprice, _ := strconv.ParseFloat(tiers.GetIndex(k).Get("prices").Get("USD").MustString(), 64)
-				msys := "MySQL"
+				mpriced, mpricem := priceMultiplication(mprice)
+				msys := "mysql"
+
 				obj := &Size{
-					Size:   &msize,
-					Price:  &mprice,
-					System: &msys,
+					Size:       &msize,
+					PriceHour:  &mprice,
+					PriceDay:   &mpriced,
+					PriceMonth: &mpricem,
+					System:     &msys,
 				}
 
 				ret[*obj.Size] = obj
