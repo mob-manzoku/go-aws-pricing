@@ -23,12 +23,15 @@ type Size struct {
 	PriceDay       *float64 `json:"price_day"`
 	PriceMonth     *float64 `json:"price_month"`
 	Network        *string  `json:"network"`
+	GP2Price       *float64 `json:"gp2_price"`
 }
 
 var awsPricingURLs = map[string]string{
 	"ec2":         "http://a0.awsstatic.com/pricing/1/ec2/linux-od.min.js",
 	"rds":         "http://a0.awsstatic.com/pricing/1/rds/mysql/pricing-standard-deployments.min.js",
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
+	"rds_gp2":     "https://a0.awsstatic.com/pricing/1/rds/mysql/pricing-gp2-standard-deploy.min.js",
+	"ec2_ebs":     "https://a0.awsstatic.com/pricing/1/ebs/pricing-ebs.min.js",
 }
 
 func priceMultiplication(hourPrice float64) (float64, float64) {
@@ -180,7 +183,6 @@ func GetRDSPricing(region string) InstanceTypes {
 	service := "rds"
 	specpath := "spec/rds.yml"
 	ret := InstanceTypes{}
-
 	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs[service])
 
 	raw, err := simplejson.NewJson([]byte(str))
@@ -246,6 +248,53 @@ func GetRDSPricing(region string) InstanceTypes {
 			ret[msize].Network = &mnet
 		}
 
+	}
+
+	return ret
+}
+
+// GetEC2GP2Pricing is getting pricing for EC2 GP2 storage. The return value is monthly fee per GB.
+func GetEC2GP2Pricing(region string) float64 {
+	GP2 := "Amazon EBS General Purpose (SSD) volumes"
+
+	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs["ec2_ebs"])
+
+	raw, _ := simplejson.NewJson([]byte(str))
+	regions := raw.Get("config").Get("regions")
+	ret := 0.0
+	for i := range regions.MustArray() {
+
+		if regions.GetIndex(i).Get("region").MustString() != region {
+			continue
+		}
+
+		types := regions.GetIndex(i).Get("types")
+		for t := range types.MustArray() {
+			if types.GetIndex(t).Get("name").MustString() != GP2 {
+				continue
+			}
+
+			ret, _ = strconv.ParseFloat(types.GetIndex(t).Get("values").GetIndex(0).Get("prices").Get("USD").MustString(), 64)
+		}
+	}
+	return ret
+}
+
+// GetRDSGP2Pricing is getting pricing for RDS(Mysql) GP2 storage. The return value is monthly fee per GB.
+func GetRDSGP2Pricing(region string) float64 {
+	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs["rds_gp2"])
+	raw, _ := simplejson.NewJson([]byte(str))
+
+	regions := raw.Get("config").Get("regions")
+	ret := 0.0
+
+	for i := range regions.MustArray() {
+
+		if regions.GetIndex(i).Get("region").MustString() != region {
+			continue
+		}
+
+		ret, _ = strconv.ParseFloat(regions.GetIndex(i).Get("rates").GetIndex(0).Get("prices").Get("USD").MustString(), 64)
 	}
 
 	return ret
