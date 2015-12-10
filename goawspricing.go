@@ -12,18 +12,20 @@ import (
 type InstanceTypes map[string]*Size
 
 type Size struct {
-	Size           *string  `json:"size"`
-	VCPU           *int     `json:"vCPU"`
-	ECU            *string  `json:"ECU"`
-	MemoryGiB      *float64 `json:"memoryGiB"`
-	StorageGB      *string  `json:"storageGB"`
-	System         *string  `json:"system"`
-	PiopsOptimized *bool    `json:"piopsOptimized"`
-	PriceHour      *float64 `json:"price_hour"`
-	PriceDay       *float64 `json:"price_day"`
-	PriceMonth     *float64 `json:"price_month"`
-	Network        *string  `json:"network"`
-	GP2Price       *float64 `json:"gp2_price"`
+	Size              *string  `json:"size"`
+	VCPU              *int     `json:"vCPU"`
+	ECU               *string  `json:"ECU"`
+	MemoryGiB         *float64 `json:"memoryGiB"`
+	StorageGB         *string  `json:"storageGB"`
+	System            *string  `json:"system"`
+	PiopsOptimized    *bool    `json:"piopsOptimized"`
+	PriceHour         *float64 `json:"price_hour"`
+	PriceDay          *float64 `json:"price_day"`
+	PriceMonth        *float64 `json:"price_month"`
+	Network           *string  `json:"network"`
+	GP2StoragePrice   *float64 `json:"gp2_storage_price"`
+	PIOPSStoragePrice *float64 `json:"piops_storage_price"`
+	PIOPSIOPrice      *float64 `json:"piops_io_price"`
 }
 
 var awsPricingURLs = map[string]string{
@@ -31,6 +33,7 @@ var awsPricingURLs = map[string]string{
 	"rds":         "http://a0.awsstatic.com/pricing/1/rds/mysql/pricing-standard-deployments.min.js",
 	"elasticache": "http://a0.awsstatic.com/pricing/1/elasticache/pricing-standard-deployments-elasticache.min.js",
 	"rds_gp2":     "https://a0.awsstatic.com/pricing/1/rds/mysql/pricing-gp2-standard-deploy.min.js",
+	"rds_piops":   "https://a0.awsstatic.com/pricing/1/rds/mysql/pricing-piops-standard-deploy.min.js",
 	"ec2_ebs":     "https://a0.awsstatic.com/pricing/1/ebs/pricing-ebs.min.js",
 }
 
@@ -298,4 +301,31 @@ func GetRDSGP2Pricing(region string) float64 {
 	}
 
 	return ret
+}
+
+// GetRDSPIOPSPricing is getting pricing for RDS(Mysql) PIOPS storage. The return values are monthly fee per GB.
+func GetRDSPIOPSPricing(region string) (storage float64, io float64) {
+	str, _ := gojsonp.GetJSONFromURL(awsPricingURLs["rds_piops"])
+	raw, _ := simplejson.NewJson([]byte(str))
+
+	regions := raw.Get("config").Get("regions")
+
+	for i := range regions.MustArray() {
+
+		if regions.GetIndex(i).Get("region").MustString() != region {
+			continue
+		}
+
+		for j := range regions.GetIndex(i).Get("rates").MustArray() {
+
+			if regions.GetIndex(i).Get("rates").GetIndex(j).Get("type").MustString() == "storageRate" {
+				storage, _ = strconv.ParseFloat(regions.GetIndex(i).Get("rates").GetIndex(j).Get("prices").Get("USD").MustString(), 64)
+			}
+			if regions.GetIndex(i).Get("rates").GetIndex(j).Get("type").MustString() == "piopsRate" {
+				io, _ = strconv.ParseFloat(regions.GetIndex(i).Get("rates").GetIndex(j).Get("prices").Get("USD").MustString(), 64)
+			}
+		}
+	}
+
+	return storage, io
 }
